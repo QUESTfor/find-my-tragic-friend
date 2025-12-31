@@ -714,6 +714,12 @@
         const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
         const timeSlots = ['早上', '中午', '晚上'];
 
+        function formatDateWithWeekday(dateStr) {
+            // dateStr format: "2026-01-15"
+            const [year, month, day] = dateStr.split('-');
+            const date = new Date(year, month - 1, day);
+            return `${dateStr} 星期${weekdays[date.getDay()]}`;
+        }
         function showUserLogin() {
             if (!window.firebaseReady) {
                 setTimeout(showUserLogin, 100);
@@ -1056,7 +1062,7 @@
                             sortedDays.forEach(day => {
                                 const data = userData[day];
                                 html += `<div class="availability-entry">
-                                    <strong>${day}</strong> - ${data.slots.join(', ')}
+                                    <strong>${formatDateWithWeekday(day)}</strong> - ${data.slots.join(', ')}
                                     ${data.time ? `<div class="time-info">時間: ${data.time}</div>` : ''}
                                     ${data.description ? `<div class="time-info">備註: ${data.description}</div>` : ''}
                                 </div>`;
@@ -1087,7 +1093,7 @@
                                 const dayDiv = document.createElement('div');
                                 dayDiv.className = 'common-day';
                                 dayDiv.innerHTML = `
-                                    <strong>${item.date}</strong><br>
+                                    <strong>${formatDateWithWeekday(item.date)}</strong><br>
                                     時段：${item.slots.join(', ')}<br>
                                     <small>所有 ${users.length} 位使用者都可用</small>
                                 `;
