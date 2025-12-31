@@ -1412,8 +1412,9 @@
                 return;
             }
 
-            // Level 1: Common time slots
+            // Level 1: Common time slots (modified to show partial matches)
             const level1 = calculateCommonSlots(users);
+            const partialMatches = calculatePartialMatches(users);
             
             const section1 = document.createElement('div');
             section1.className = 'common-section';
@@ -1421,6 +1422,22 @@
             
             if (level1.length === 0) {
                 section1.innerHTML += '<div class="no-common">沒有找到所有人都可用的相同時段</div>';
+                section1.innerHTML += '<h4 style="margin-top: 20px;">部分成員可用的時段（依人數排序）：</h4>';
+                
+                if (partialMatches.length === 0) {
+                    section1.innerHTML += '<div class="no-common">沒有找到任何可用時段</div>';
+                } else {
+                    partialMatches.forEach(item => {
+                        const dayDiv = document.createElement('div');
+                        dayDiv.className = 'common-day';
+                        dayDiv.innerHTML = `
+                            <strong>${formatDateWithWeekday(item.date)}</strong><br>
+                            時段：${item.slots.join(', ')}<br>
+                            <small>${item.count} / ${users.length} 位使用者可用 (${item.userNames.join(', ')})</small>
+                        `;
+                        section1.appendChild(dayDiv);
+                    });
+                }
             } else {
                 level1.forEach(item => {
                     const dayDiv = document.createElement('div');
@@ -1484,7 +1501,53 @@
 
             return commonDays.sort((a, b) => a.date.localeCompare(b.date));
         }
-
+        function calculatePartialMatches(users) {
+            const allDays = new Set();
+            const partialMatches = [];
+            
+            users.forEach(user => {
+                Object.keys(allGroupsData[user] || {}).forEach(day => allDays.add(day));
+            });
+        
+            allDays.forEach(day => {
+                const usersWithDay = users.filter(user => allGroupsData[user] && allGroupsData[user][day]);
+                
+                // Only show if at least 2 people are available
+                if (usersWithDay.length >= 2 && usersWithDay.length < users.length) {
+                    // Collect all slots from users on this day
+                    const slotCounts = {};
+                    
+                    usersWithDay.forEach(user => {
+                        allGroupsData[user][day].slots.forEach(slot => {
+                            if (!slotCounts[slot]) {
+                                slotCounts[slot] = { count: 0, users: [] };
+                            }
+                            slotCounts[slot].count++;
+                            slotCounts[slot].users.push(user);
+                        });
+                    });
+                    
+                    // Find slots with most people
+                    Object.keys(slotCounts).forEach(slot => {
+                        const slotData = slotCounts[slot];
+                        if (slotData.count >= 2) {
+                            partialMatches.push({
+                                date: day,
+                                slots: [slot],
+                                count: slotData.count,
+                                userNames: slotData.users
+                            });
+                        }
+                    });
+                }
+            });
+        
+            // Sort by count (descending), then by date
+            return partialMatches.sort((a, b) => {
+                if (b.count !== a.count) return b.count - a.count;
+                return a.date.localeCompare(b.date);
+            }).slice(0, 20); // Limit to top 20 results
+        }
         function calculateOverlappingTimes(users) {
             const overlaps = [];
             const allDays = new Set();
