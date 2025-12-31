@@ -1114,8 +1114,8 @@
                             level2.forEach(item => {
                                 const dayDiv = document.createElement('div');
                                 dayDiv.className = 'common-day';
-                                dayDiv.innerHTML = `
-                                    <strong>${item.date}</strong><br>
+                               dayDiv.innerHTML = `
+                                    <strong>${formatDateWithWeekday(item.date)}</strong><br>
                                     重疊時間：${item.overlap}<br>
                                     <small>參與者：${item.users.join(', ')}</small>
                                 `;
